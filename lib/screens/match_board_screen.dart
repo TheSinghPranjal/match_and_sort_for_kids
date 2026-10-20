@@ -75,7 +75,7 @@ class _MatchBoardScreenState extends GameShellState<MatchBoardScreen> {
         audio.speak(card.spoken ?? card.name);
       case BoardOutcome.matched:
         final (a, b) = session.lastPair!;
-        app.rewards.awardPoint(sessionId, a.key);
+        app.rewards.awardStar(sessionId, a.key);
         audio.sfx(Sfx.match);
         audio.haptic();
         audio.speak(praise[rnd.nextInt(praise.length)]);

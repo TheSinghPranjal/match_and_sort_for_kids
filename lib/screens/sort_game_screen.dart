@@ -133,7 +133,7 @@ class _SortGameScreenState extends GameShellState<SortGameScreen> {
     final outcome = session.place(itemId, cat.id);
     switch (outcome) {
       case SortOutcome.correct:
-        app.rewards.awardPoint(sessionId, item.id);
+        app.rewards.awardStar(sessionId, item.id);
         audio.sfx(Sfx.correct);
         audio.haptic();
         audio.speak(
@@ -428,13 +428,24 @@ class _SortGameScreenState extends GameShellState<SortGameScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              shape: BoxShape.circle,
+                          // Takes only the space left over, so the basket
+                          // never overflows (glow border, small phones,
+                          // 2x2 layouts, large text).
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: EdgeInsets.all(icon * 0.08),
+                                  child: ItemArt(cat.icon, size: icon),
+                                ),
+                              ),
                             ),
-                            padding: EdgeInsets.all(icon * 0.08),
-                            child: ItemArt(cat.icon, size: icon),
                           ),
                           _placedRow(placed, compact ? 22 : 28),
                         ],

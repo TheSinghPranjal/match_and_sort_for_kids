@@ -6,23 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_models.dart';
 import 'settings_service.dart';
 
-class RewardBadge {
-  const RewardBadge(this.id, this.emoji, this.title);
-  final String id;
-  final String emoji;
-  final String title;
-}
-
-const allBadges = <RewardBadge>[
-  RewardBadge('first_round', '🎉', 'First Round'),
-  RewardBadge('ten_rounds', '🏅', '10 Rounds'),
-  RewardBadge('sorter', '🧺', 'Super Sorter'),
-  RewardBadge('matcher', '🧩', 'Master Matcher'),
-  RewardBadge('explorer', '🧭', 'Tried 5 Games'),
-  RewardBadge('streak3', '🔥', '3 Days in a Row'),
-  RewardBadge('stars50', '🌟', '50 Stars'),
-];
-
 class GameProgress {
   GameProgress({this.rounds = 0, this.levelBonus = 0, this.cleanStreak = 0});
   int rounds;
@@ -48,49 +31,36 @@ class GameProgress {
   }
 }
 
+/// What a finished round earned: the stars collected during it.
 class RoundReward {
-  const RoundReward({
-    required this.coins,
-    required this.stars,
-    required this.xp,
-    required this.newBadges,
-    required this.levelUp,
-  });
-  final int coins;
+  const RoundReward({required this.stars, required this.levelUp});
   final int stars;
-  final int xp;
-  final List<RewardBadge> newBadges;
   final Level? levelUp;
 }
 
-/// One reward service for sorting and matching. Every award is keyed by a
-/// session id so replays, rebuilds or double taps can never pay twice.
-/// Mistakes never remove anything.
+/// The one reward system: stars. A child earns one star for every right
+/// answer, in sorting and matching alike. Each star is keyed by session and
+/// action, so replays, rebuilds or double taps can never pay twice, and
+/// mistakes never take a star away.
 class RewardsController extends ChangeNotifier {
   RewardsController(this._prefs, {DateTime Function()? clock})
     : _clock = clock ?? DateTime.now {
     _load();
   }
 
-  static const _key = 'rewards_v1';
+  static const _key = 'rewards_v2';
+  static const _legacyKey = 'rewards_v1';
   final SharedPreferences? _prefs;
   final DateTime Function() _clock;
 
-  int points = 0;
-  int coins = 0;
   int stars = 0;
-  int xp = 0;
   int roundsCompleted = 0;
-  int sortRounds = 0;
-  int matchRounds = 0;
-  int dayStreak = 0;
-  String lastPlayDay = '';
   String usageDay = '';
   int playSecondsToday = 0;
   Map<String, GameProgress> progress = {};
-  Set<String> badges = {};
 
-  final Set<String> _pointKeys = {};
+  final Set<String> _starKeys = {};
+  final Map<String, int> _sessionStars = {};
   final Map<String, RoundReward> _roundAwards = {};
 
   /// Seconds played since the app opened (for the session-length nudge).
@@ -111,10 +81,11 @@ class RewardsController extends ChangeNotifier {
     return Level.fromValue((s.ageGroup.startLevel.value + bonus).clamp(1, 3));
   }
 
-  /// One point per correct action. Returns false if already awarded.
-  bool awardPoint(String sessionId, String actionId) {
-    if (!_pointKeys.add('$sessionId/$actionId')) return false;
-    points++;
+  /// One star per correct action. Returns false if already awarded.
+  bool awardStar(String sessionId, String actionId) {
+    if (!_starKeys.add('$sessionId/$actionId')) return false;
+    stars++;
+    _sessionStars[sessionId] = (_sessionStars[sessionId] ?? 0) + 1;
     notifyListeners();
     _save();
     return true;
@@ -134,18 +105,6 @@ class RewardsController extends ChangeNotifier {
     final gp = progressOf(game.id);
     gp.rounds++;
     roundsCompleted++;
-    if (game.kind == GameKind.sort) {
-      sortRounds++;
-    } else {
-      matchRounds++;
-    }
-    const earnedCoins = 5;
-    const earnedStars = 1;
-    final earnedXp = correct * 2 + 5;
-    coins += earnedCoins;
-    stars += earnedStars;
-    xp += earnedXp;
-    _touchStreak();
 
     // Adaptive difficulty: two smooth rounds in a row moves up a level;
     // a really bumpy round quietly eases back down.
@@ -164,41 +123,14 @@ class RewardsController extends ChangeNotifier {
       }
     }
 
-    final newBadges = <RewardBadge>[];
-    void check(String id, bool ok) {
-      if (ok && badges.add(id)) {
-        newBadges.add(allBadges.firstWhere((b) => b.id == id));
-      }
-    }
-
-    check('first_round', roundsCompleted >= 1);
-    check('ten_rounds', roundsCompleted >= 10);
-    check('sorter', sortRounds >= 10);
-    check('matcher', matchRounds >= 10);
-    check('explorer', progress.values.where((p) => p.rounds > 0).length >= 5);
-    check('streak3', dayStreak >= 3);
-    check('stars50', stars >= 50);
-
     final reward = RoundReward(
-      coins: earnedCoins,
-      stars: earnedStars,
-      xp: earnedXp,
-      newBadges: newBadges,
+      stars: _sessionStars[sessionId] ?? 0,
       levelUp: levelUp,
     );
     _roundAwards[sessionId] = reward;
     notifyListeners();
     _save();
     return reward;
-  }
-
-  void _touchStreak() {
-    final today = _today;
-    if (lastPlayDay == today) return;
-    final y = _clock().subtract(const Duration(days: 1));
-    final yesterday = '${y.year}-${y.month}-${y.day}';
-    dayStreak = lastPlayDay == yesterday ? dayStreak + 1 : 1;
-    lastPlayDay = today;
   }
 
   void addPlaySeconds(int seconds) {
@@ -231,12 +163,11 @@ class RewardsController extends ChangeNotifier {
   }
 
   void resetAll() {
-    points = coins = stars = xp = 0;
-    roundsCompleted = sortRounds = matchRounds = dayStreak = 0;
-    lastPlayDay = '';
+    stars = 0;
+    roundsCompleted = 0;
     progress = {};
-    badges = {};
-    _pointKeys.clear();
+    _starKeys.clear();
+    _sessionStars.clear();
     _roundAwards.clear();
     notifyListeners();
     _save();
@@ -245,19 +176,15 @@ class RewardsController extends ChangeNotifier {
   void _load() {
     try {
       final raw = _prefs?.getString(_key);
-      if (raw == null) return;
-      final j = jsonDecode(raw) as Map<String, dynamic>;
+      final legacy = raw == null ? _prefs?.getString(_legacyKey) : null;
+      if (raw == null && legacy == null) return;
+      final j = jsonDecode(raw ?? legacy!) as Map<String, dynamic>;
       int i(String k) => j[k] is int ? (j[k] as int).clamp(0, 1 << 30) : 0;
-      points = i('points');
-      coins = i('coins');
-      stars = i('stars');
-      xp = i('xp');
+      // Older versions counted one "point" per right answer - those become
+      // stars. Their coins, XP and badges are dropped.
+      stars = raw != null ? i('stars') : i('points');
       roundsCompleted = i('rounds');
-      sortRounds = i('sortRounds');
-      matchRounds = i('matchRounds');
-      dayStreak = i('streak');
       playSecondsToday = i('playSeconds');
-      lastPlayDay = j['lastDay'] is String ? j['lastDay'] as String : '';
       usageDay = j['usageDay'] is String ? j['usageDay'] as String : '';
       final p = j['progress'];
       if (p is Map) {
@@ -265,8 +192,6 @@ class RewardsController extends ChangeNotifier {
           for (final e in p.entries) '${e.key}': GameProgress.fromJson(e.value),
         };
       }
-      final b = j['badges'];
-      badges = b is List ? {for (final x in b) '$x'} : {};
     } catch (_) {
       // Corrupt data: start fresh rather than crash.
     }
@@ -276,19 +201,11 @@ class RewardsController extends ChangeNotifier {
     _prefs?.setString(
       _key,
       jsonEncode({
-        'points': points,
-        'coins': coins,
         'stars': stars,
-        'xp': xp,
         'rounds': roundsCompleted,
-        'sortRounds': sortRounds,
-        'matchRounds': matchRounds,
-        'streak': dayStreak,
-        'lastDay': lastPlayDay,
         'usageDay': usageDay,
         'playSeconds': playSecondsToday,
         'progress': progress.map((k, v) => MapEntry(k, v.toJson())),
-        'badges': badges.toList(),
       }),
     );
   }

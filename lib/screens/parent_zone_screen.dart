@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../data/catalog.dart';
 import '../models/game_models.dart';
 import '../services/app_scope.dart';
-import '../services/rewards_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/clay.dart';
@@ -139,7 +138,7 @@ class ParentZoneScreen extends StatelessWidget {
                   ),
                   _Switch(
                     'Show rewards',
-                    'Stars and coins (celebrations always show)',
+                    'Star counter (celebrations always show)',
                     s.rewardsVisible,
                     (v) => s.update((x) => x.rewardsVisible = v),
                   ),
@@ -188,25 +187,6 @@ class ParentZoneScreen extends StatelessWidget {
                         text: '${r.roundsCompleted} rounds',
                       ),
                       ClayPill(emoji: '⭐', text: '${r.stars}'),
-                      ClayPill(emoji: '🪙', text: '${r.coins}'),
-                      ClayPill(emoji: '💜', text: '${r.xp} XP'),
-                      ClayPill(emoji: '🔥', text: '${r.dayStreak} days'),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final b in allBadges)
-                        Opacity(
-                          opacity: r.badges.contains(b.id) ? 1 : 0.3,
-                          child: Chip(
-                            avatar: Text(b.emoji),
-                            label: Text(b.title, style: AppText.body(13)),
-                            backgroundColor: Colors.white,
-                          ),
-                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -281,14 +261,14 @@ class ParentZoneScreen extends StatelessWidget {
                 emoji: '🧹',
                 children: [
                   ClayButton(
-                    label: 'Reset progress & rewards',
+                    label: 'Reset progress & stars',
                     color: AppColors.coralDeep,
                     fontSize: 18,
                     height: 56,
                     expand: true,
                     onTap: () => _confirm(
                       context,
-                      'Reset all progress, stars and badges?',
+                      'Reset all progress and stars?',
                       r.resetAll,
                     ),
                   ),

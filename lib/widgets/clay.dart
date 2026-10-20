@@ -301,7 +301,7 @@ class ClayIconButton extends StatelessWidget {
   }
 }
 
-/// Small pill showing a reward counter (stars, coins).
+/// Small pill showing a counter (stars, age group, timer).
 class ClayPill extends StatelessWidget {
   const ClayPill({
     super.key,

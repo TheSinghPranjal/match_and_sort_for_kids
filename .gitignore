@@ -43,3 +43,32 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets - signing keys, passwords and credentials. Never commit these.
+# Android upload/release keystores and their passwords
+*.jks
+*.keystore
+key.properties
+**/key.properties
+local.properties
+# iOS / Apple signing certificates, profiles and API keys
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.p8
+AuthKey_*.p8
+# Generic private keys and environment files
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+# Firebase / Google service configs and Play Console service accounts
+google-services.json
+GoogleService-Info.plist
+*service-account*.json
+# Release builds (contain your signed app)
+*.aab
+*.apk
+*.ipa

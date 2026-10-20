@@ -167,7 +167,7 @@ class _SparkleBurstState extends State<SparkleBurst>
           if (!_c.isAnimating) return SizedBox.square(dimension: widget.size);
           final t = Curves.easeOut.transform(_c.value);
           final opacity = (1 - _c.value).clamp(0.0, 1.0);
-          const emojis = ['✨', '⭐', '💖', '✨', '🌟', '⭐'];
+          const emojis = ['✨', '⭐', '✨', '⭐', '✨', '⭐'];
           return SizedBox.square(
             dimension: widget.size,
             child: Stack(

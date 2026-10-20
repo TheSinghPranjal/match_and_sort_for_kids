@@ -101,10 +101,14 @@ class _HomeScreenState extends State<HomeScreen> {
             runSpacing: 10,
             alignment: WrapAlignment.center,
             children: [
-              ClayPill(
-                emoji: s.ageGroup.emoji,
-                text: s.ageGroup.title,
-                color: AppColors.mint,
+              // Age world as plain text, so the stars are the only
+              // reward-looking pill on screen.
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  '${s.ageGroup.title} · ages ${s.ageGroup.ages}',
+                  style: AppText.title(18, color: AppColors.inkSoft),
+                ),
               ),
               if (s.rewardsVisible) ...[
                 ClayPill(
@@ -112,17 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   text: '${r.stars}',
                   color: AppColors.sunny,
                 ),
-                ClayPill(
-                  emoji: '🪙',
-                  text: '${r.coins}',
-                  color: AppColors.peach,
-                ),
-                if (r.badges.isNotEmpty)
-                  ClayPill(
-                    emoji: '🏅',
-                    text: '${r.badges.length}',
-                    color: AppColors.lavender,
-                  ),
               ],
             ],
           ),
@@ -240,7 +233,6 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, i) => FunkyGameCard(
                 game: list[i],
                 rounds: app.rewards.progress[list[i].id]?.rounds ?? 0,
-                level: app.rewards.levelFor(list[i], app.settings),
                 onTap: () => launchGame(context, list[i]),
               ),
             ),
@@ -265,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('🌙', style: TextStyle(fontSize: 72)),
+                  const Text('😴', style: TextStyle(fontSize: 72)),
                   Text(
                     'Time for a rest!',
                     style: AppText.display(30),
@@ -361,13 +353,11 @@ class FunkyGameCard extends StatelessWidget {
     super.key,
     required this.game,
     required this.rounds,
-    required this.level,
     required this.onTap,
   });
 
   final GameDef game;
   final int rounds;
-  final Level level;
   final VoidCallback onTap;
 
   @override
@@ -447,11 +437,6 @@ class FunkyGameCard extends StatelessWidget {
                                     style: TextStyle(fontSize: 16),
                                   ),
                                 ),
-                              const SizedBox(width: 6),
-                              Text(
-                                level.emoji,
-                                style: const TextStyle(fontSize: 16),
-                              ),
                             ],
                           ),
                         ],

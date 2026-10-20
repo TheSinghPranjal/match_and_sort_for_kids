@@ -219,7 +219,7 @@ abstract class GameShellState<T extends StatefulWidget> extends State<T>
             ListenableBuilder(
               listenable: app.rewards,
               builder: (_, _) =>
-                  ClayPill(emoji: '⭐', text: '${app.rewards.points}'),
+                  ClayPill(emoji: '⭐', text: '${app.rewards.stars}'),
             ),
             const SizedBox(width: 8),
           ],

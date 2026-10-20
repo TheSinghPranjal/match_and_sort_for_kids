@@ -5,6 +5,7 @@ import 'package:match_and_sort_for_kids/engine/match_engine.dart';
 import 'package:match_and_sort_for_kids/engine/sort_engine.dart';
 import 'package:match_and_sort_for_kids/main.dart';
 import 'package:match_and_sort_for_kids/models/game_models.dart';
+import 'package:match_and_sort_for_kids/screens/celebration_screen.dart';
 import 'package:match_and_sort_for_kids/screens/game_router.dart';
 import 'package:match_and_sort_for_kids/screens/home_screen.dart';
 import 'package:match_and_sort_for_kids/screens/match_board_screen.dart';
@@ -14,6 +15,7 @@ import 'package:match_and_sort_for_kids/services/app_scope.dart';
 import 'package:match_and_sort_for_kids/services/audio_service.dart';
 import 'package:match_and_sort_for_kids/services/rewards_service.dart';
 import 'package:match_and_sort_for_kids/services/settings_service.dart';
+import 'package:match_and_sort_for_kids/widgets/clay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Harness {
@@ -27,6 +29,7 @@ Future<Harness> pumpApp(
   Widget? home,
   Size size = const Size(390, 844),
   bool drag = false,
+  int? level,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -37,6 +40,7 @@ Future<Harness> pumpApp(
       s.interaction = drag
           ? InteractionMode.tapAndDrag
           : InteractionMode.tapOnly;
+      s.fixedLevel = level;
     });
   final rewards = RewardsController(prefs);
   tester.view.physicalSize = size * 3;
@@ -80,6 +84,68 @@ void main() {
     expect(find.text('Colour Match'), findsOneWidget);
     await finish(tester);
   });
+
+  // Stars are the only reward: no moons, coins, badges, XP or streaks.
+  const banned = [
+    '🌙',
+    '🪙',
+    '🏅',
+    '🎖',
+    '🏆',
+    '💜',
+    '🔥',
+    'coin',
+    'badge',
+    'XP',
+  ];
+  List<String> visibleText(WidgetTester tester) => [
+    for (final e in find.byType(Text).evaluate())
+      (e.widget as Text).data ??
+          (e.widget as Text).textSpan?.toPlainText() ??
+          '',
+  ];
+
+  testWidgets('home shows only a star reward', (tester) async {
+    await pumpApp(tester);
+    final texts = visibleText(tester);
+    for (final b in banned) {
+      expect(texts.where((t) => t.contains(b)), isEmpty, reason: b);
+    }
+    expect(find.byType(ClayPill), findsOneWidget);
+    expect(find.widgetWithText(ClayPill, '0'), findsOneWidget);
+    await finish(tester);
+  });
+
+  testWidgets(
+    'celebration gives only stars, even with level-up and break notes',
+    (tester) async {
+      final h = await pumpApp(
+        tester,
+        home: CelebrationScreen(
+          game: allGames.first,
+          title: 'Amazing Sorting!',
+          completed: 4,
+          reward: const RoundReward(stars: 4, levelUp: Level.easy),
+        ),
+      );
+      h.rewards.sessionSeconds = 99999;
+      tester.element(find.byType(CelebrationScreen)).markNeedsBuild();
+      await tester.pump();
+      expect(find.textContaining('rest your eyes'), findsOneWidget);
+      expect(find.textContaining('Ready for Easy'), findsOneWidget);
+      final texts = visibleText(tester);
+      for (final b in banned) {
+        expect(
+          texts.where((t) => t.toLowerCase().contains(b.toLowerCase())),
+          isEmpty,
+          reason: b,
+        );
+      }
+      expect(find.byType(ClayPill), findsOneWidget);
+      expect(find.text('+4'), findsOneWidget);
+      await finish(tester);
+    },
+  );
 
   testWidgets('parent zone is protected by the gate', (tester) async {
     await pumpApp(tester);
@@ -142,7 +208,7 @@ void main() {
       await tester.tap(find.bySemanticsLabel(RegExp('^${wrong.label} basket')));
       await tester.pump(const Duration(milliseconds: 500));
       expect(session.sortedCount, 0);
-      expect(h.rewards.points, 0);
+      expect(h.rewards.stars, 0);
 
       while (!session.isComplete) {
         final item = session.hintItem!;
@@ -155,8 +221,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 800));
       expect(find.text('Amazing Sorting!'), findsWidgets);
       expect(find.text('Play Again'), findsOneWidget);
-      expect(h.rewards.points, session.total);
-      expect(h.rewards.stars, 1);
+      expect(h.rewards.stars, session.total);
+      expect(find.text('+${session.total}'), findsOneWidget);
       await finish(tester);
     },
   );
@@ -206,7 +272,7 @@ void main() {
     }
     await tester.pump(const Duration(milliseconds: 800));
     expect(find.text('Wonderful Matching!'), findsWidgets);
-    expect(h.rewards.points, session.total);
+    expect(h.rewards.stars, session.total);
     await finish(tester);
   });
 
@@ -257,7 +323,50 @@ void main() {
     await finish(tester);
   });
 
-  // Every activity must open and render on a small phone without overflow.
+  testWidgets('4 colour baskets fit while one glows on a small phone', (
+    tester,
+  ) async {
+    final game =
+        allGames.firstWhere((g) => g.id == 'color_sort') as SortGameDef;
+    await pumpApp(
+      tester,
+      home: SortGameScreen(game: game),
+      size: const Size(375, 667),
+      level: 3,
+    );
+    final session = stateOf(tester, SortGameScreen).session as SortSession;
+    expect(session.round.categories.length, 4);
+    // A wrong try makes the right basket glow with its white border.
+    final item = session.hintItem!;
+    final wrong = session.round.categories.firstWhere(
+      (c) => c.id != item.categoryId,
+    );
+    await tester.tap(find.byKey(ValueKey(item.id)));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel(RegExp('^${wrong.label} basket')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+    await finish(tester);
+  });
+
+  // Every activity must open and render on a small phone without overflow,
+  // at both the simplest and the busiest level.
+  for (final game in allGames) {
+    testWidgets(
+      '#${game.number} ${game.id} renders on a small screen at Explorer',
+      (tester) async {
+        await pumpApp(
+          tester,
+          home: gameScreenFor(game),
+          size: const Size(320, 568),
+          level: 3,
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(tester.takeException(), isNull);
+        await finish(tester);
+      },
+    );
+  }
   for (final game in allGames) {
     testWidgets('#${game.number} ${game.id} renders on a small screen', (
       tester,

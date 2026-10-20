@@ -75,7 +75,7 @@ class _MatchPromptScreenState extends GameShellState<MatchPromptScreen> {
     final outcome = session.choose(card.id);
     switch (outcome) {
       case PromptOutcome.correct:
-        app.rewards.awardPoint(sessionId, '${session.index}');
+        app.rewards.awardStar(sessionId, '${session.index}');
         audio.sfx(Sfx.match);
         audio.haptic();
         audio.speak(

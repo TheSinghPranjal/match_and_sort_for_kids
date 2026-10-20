@@ -47,10 +47,13 @@ void main() {
     expect(s2.timerEnabled, isFalse);
   });
 
-  test('round rewards are awarded exactly once per session', () {
+  test('a round reports its stars and completes only once', () {
     final settings = SettingsController(prefs);
     final r = RewardsController(prefs);
     final game = allGames.first;
+    for (final item in ['a', 'b', 'c', 'd']) {
+      r.awardStar('s1', item);
+    }
     final a = r.completeRound(
       sessionId: 's1',
       game: game,
@@ -68,22 +71,32 @@ void main() {
       settings: settings,
     );
     expect(identical(a, b), isTrue);
-    expect(r.stars, 1);
-    expect(r.coins, 5);
+    expect(a.stars, 4);
+    // Finishing a round adds no extra currency - stars come from answers.
+    expect(r.stars, 4);
     expect(r.roundsCompleted, 1);
-    expect(r.badges, contains('first_round'));
   });
 
-  test('points award once per action and mistakes never subtract', () {
+  test('one star per right answer, never twice, never taken away', () {
     final r = RewardsController(prefs);
-    expect(r.awardPoint('s', 'apple'), isTrue);
-    expect(r.awardPoint('s', 'apple'), isFalse);
-    expect(r.points, 1);
+    expect(r.awardStar('s', 'apple'), isTrue);
+    expect(r.awardStar('s', 'apple'), isFalse);
+    expect(r.awardStar('s2', 'apple'), isTrue);
+    expect(r.stars, 2);
   });
 
-  test('rewards persist across restarts', () {
+  test('old saved points carry over as stars', () async {
+    SharedPreferences.setMockInitialValues({
+      'rewards_v1': '{"points":12,"coins":40,"stars":3,"xp":99}',
+    });
+    final r = RewardsController(await SharedPreferences.getInstance());
+    expect(r.stars, 12);
+  });
+
+  test('stars persist across restarts', () {
     final settings = SettingsController(prefs);
-    RewardsController(prefs).completeRound(
+    final first = RewardsController(prefs)..awardStar('x', 'apple');
+    first.completeRound(
       sessionId: 'x',
       game: allGames.first,
       level: Level.veryEasy,

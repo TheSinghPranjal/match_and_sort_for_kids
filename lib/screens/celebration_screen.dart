@@ -80,42 +80,18 @@ class CelebrationScreen extends StatelessWidget {
                               ),
                               if (s.rewardsVisible) ...[
                                 const SizedBox(height: 16),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: [
-                                    ClayPill(
-                                      emoji: '⭐',
-                                      text: '+${reward.stars}',
-                                      color: AppColors.sunny,
-                                    ),
-                                    ClayPill(
-                                      emoji: '🪙',
-                                      text: '+${reward.coins}',
-                                      color: AppColors.peach,
-                                    ),
-                                    ClayPill(
-                                      emoji: '💜',
-                                      text: '+${reward.xp} XP',
-                                      color: AppColors.lavender,
-                                    ),
-                                  ],
+                                ClayPill(
+                                  emoji: '⭐',
+                                  text: '+${reward.stars}',
+                                  color: AppColors.sunny,
                                 ),
-                                for (final b in reward.newBadges) ...[
-                                  const SizedBox(height: 12),
-                                  HintBubble(
-                                    text: 'New badge: ${b.title}',
-                                    emoji: b.emoji,
-                                  ),
-                                ],
                               ],
                               if (reward.levelUp != null) ...[
                                 const SizedBox(height: 12),
                                 HintBubble(
                                   text:
                                       'Ready for ${reward.levelUp!.label} next time!',
-                                  emoji: reward.levelUp!.emoji,
+                                  emoji: '👏',
                                 ),
                               ],
                               if (needsBreak) ...[
@@ -123,7 +99,7 @@ class CelebrationScreen extends StatelessWidget {
                                 const HintBubble(
                                   text:
                                       'Great playing! Time to rest your eyes.',
-                                  emoji: '🌙',
+                                  emoji: '😴',
                                 ),
                               ],
                             ],
