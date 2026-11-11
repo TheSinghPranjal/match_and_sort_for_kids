@@ -59,6 +59,7 @@ flutter:
 
   assets:
     - assets/sounds/
+    - assets/branding/lazy_bear_club.png
 
   fonts:
     - family: Fredoka

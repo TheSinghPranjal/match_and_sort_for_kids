@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#009AFE</color>
+    <!-- Matches the in-app splash sky so launch does not flash white. -->
+    <color name="splash_background">#8ED6FF</color>
 </resources>
