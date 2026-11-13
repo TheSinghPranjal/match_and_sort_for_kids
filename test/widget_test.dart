@@ -8,6 +8,7 @@ import 'package:match_and_sort_for_kids/models/game_models.dart';
 import 'package:match_and_sort_for_kids/screens/celebration_screen.dart';
 import 'package:match_and_sort_for_kids/screens/game_router.dart';
 import 'package:match_and_sort_for_kids/screens/home_screen.dart';
+import 'package:match_and_sort_for_kids/screens/splash_screen.dart';
 import 'package:match_and_sort_for_kids/screens/match_board_screen.dart';
 import 'package:match_and_sort_for_kids/screens/match_prompt_screen.dart';
 import 'package:match_and_sort_for_kids/screens/sort_game_screen.dart';
@@ -53,6 +54,10 @@ Future<Harness> pumpApp(
   );
   if (home == null) {
     await tester.pumpWidget(app);
+    // The app opens on a short splash, then fades into the home screen.
+    await tester.pump();
+    await tester.pump(kSplashDuration + const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 500));
   } else {
     await tester.pumpWidget(
       AppScope(
@@ -62,8 +67,8 @@ Future<Harness> pumpApp(
         child: MaterialApp(home: home),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 100));
   }
-  await tester.pump(const Duration(milliseconds: 100));
   return Harness(settings, rewards);
 }
 

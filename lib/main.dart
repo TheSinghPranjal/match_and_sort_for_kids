@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/app_scope.dart';
 import 'services/audio_service.dart';
 import 'services/rewards_service.dart';
@@ -62,7 +62,7 @@ class MatchAndSortApp extends StatelessWidget {
             child: child!,
           );
         },
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
