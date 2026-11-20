@@ -917,7 +917,7 @@ final List<MatchGameDef> matchGames = [
     ],
   ),
 
-  // 43 ----------------------------------------------------- object rooms
+
   MatchGameDef(
     id: 'object_rooms',
     number: 43,
