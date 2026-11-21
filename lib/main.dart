@@ -10,6 +10,7 @@ import 'services/settings_service.dart';
 import 'theme/app_theme.dart';
 
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences? prefs;
