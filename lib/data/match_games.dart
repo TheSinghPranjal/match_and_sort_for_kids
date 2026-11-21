@@ -929,6 +929,7 @@ final List<MatchGameDef> matchGames = [
     rule: MatchRule.roomId,
     layout: MatchLayout.prompt,
     pairs: [
+
       for (final (emoji, name, scene, lvl) in [
         (
           '🛏️',
