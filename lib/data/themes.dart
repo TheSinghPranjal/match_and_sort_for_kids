@@ -14,6 +14,7 @@ class Themes {
     decorations: ['🌻', '🌷', '🦋', '🌳'],
   );
 
+
   static const artRoom = GameTheme(
     top: Color(0xFFFFC7E6),
     bottom: Color(0xFFFFF0D9),
