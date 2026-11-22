@@ -13,6 +13,7 @@ GameDef? gameById(String id) {
   return null;
 }
 
+
 /// Static content checks. Returns human-readable problems (empty = valid).
 /// Run by the test suite so broken content never ships.
 List<String> validateCatalog() {
